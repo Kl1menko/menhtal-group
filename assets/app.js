@@ -50,6 +50,7 @@ customElements.define(
     connectedCallback() {
       const ey = this.getAttribute("eyebrow") || "";
       const title = this.getAttribute("title") || "";
+      this.removeAttribute("title");
       const subtitle = this.getAttribute("subtitle") || "";
       const sub2 = this.getAttribute("sub2") || "";
       const pt = this.getAttribute("primary-text") || "Подати заявку";
@@ -76,6 +77,7 @@ customElements.define('section-block', class extends HTMLElement{
   connectedCallback(){
     if (this.shadowRoot) return;
     const title = this.getAttribute('title')||'';
+    this.removeAttribute('title');
     const subtitle = this.getAttribute('subtitle')||'';
     const isAbout = this.id === 'about';
     const root = this.attachShadow({mode:'open'});
@@ -85,7 +87,7 @@ customElements.define('section-block', class extends HTMLElement{
         .title{font-weight:900;font-size:clamp(22px,3.2vw,36px);margin:0 0 8px}
         .subtitle{color:var(--muted);margin:0 0 18px}
         .slot{display:grid;gap:16px}
-        .section-about{position:relative;padding-top:40px;padding-bottom:36px;border-radius:20px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);box-shadow:0 12px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06)}
+        .section-about{position:relative;padding-top:40px;padding-bottom:36px;border-radius:var(--radius);background:linear-gradient(180deg, rgba(17,17,17,.03), rgba(17,17,17,.01));border:1px solid var(--line);box-shadow:var(--shadow)}
         .section-about .title{display:flex;align-items:center;gap:10px;margin-top:0;margin-bottom:6px}
         .section-about .subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:18px}
         .section-about ::slotted(bullets-block){display:block}
