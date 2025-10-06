@@ -10,10 +10,9 @@ customElements.define(
   class extends HTMLElement {
     connectedCallback() {
       const brand = this.getAttribute("brand") || "Бренд";
-      const cta = this.getAttribute("cta") || "Записатися";
-      const href = this.getAttribute("cta-href") || TELEGRAM_URL;
-      this.attachShadow({ mode: "open" }).append(
-        tpl(`<style>
+      if (!this.shadowRoot) {
+        this.attachShadow({ mode: "open" }).append(
+          tpl(`<style>
         :host{display:block;position:relative;padding-bottom:120px}
         .nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:120;background:rgba(241,255,254,.6);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:56px;width:min(100% - 32px,var(--maxw));box-shadow:0 14px 38px rgba(17,17,17,.08);color:var(--text);transition:background .3s ease, box-shadow .3s ease}
         .nav:hover{background:rgba(241,255,254,.8);box-shadow:0 18px 42px rgba(17,17,17,.12)}
@@ -22,7 +21,8 @@ customElements.define(
         .brand{display:flex;align-items:center;gap:12px;font-weight:900}
         .brand span{font-size:1rem;font-weight:900;line-height:1.1}
         .avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.8);box-shadow:0 6px 18px rgba(17,17,17,.15)}
-        .nav-list{display:none;gap:18px;font-weight:700;margin-left:auto}
+        .nav-list{display:none;gap:18px;font-weight:700;margin-left:auto;opacity:1;visibility:visible;transition:opacity .25s ease, transform .25s ease}
+        .nav-list.hide{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-8px)}
         .nav-list a{white-space:nowrap;font-size:.92rem;font-weight:600}
         @media (min-width:860px){.nav-list{display:flex}}
       </style>
@@ -38,7 +38,25 @@ customElements.define(
           </div>
         </div>
       </nav>`).content
-      );
+        );
+      }
+      this._navList = this.shadowRoot.querySelector(".nav-list");
+      if (!this._handleNavVisibility) {
+        this._handleNavVisibility = () => {
+          if (!this._navList) return;
+          const shouldHide = window.scrollY > 50 && window.innerWidth >= 860;
+          this._navList.classList.toggle("hide", shouldHide);
+        };
+      }
+      window.addEventListener("scroll", this._handleNavVisibility, { passive: true });
+      window.addEventListener("resize", this._handleNavVisibility);
+      this._handleNavVisibility();
+    }
+    disconnectedCallback() {
+      if (this._handleNavVisibility) {
+        window.removeEventListener("scroll", this._handleNavVisibility);
+        window.removeEventListener("resize", this._handleNavVisibility);
+      }
     }
   }
 );
@@ -487,19 +505,19 @@ customElements.define(
       <footer class="footer-shell">
         <style>
           .footer-shell{padding:0 0 48px;margin-top:48px}
-          .footer-card{max-width:var(--maxw);margin:0 auto;padding:24px 26px;background:#EEEDE5;border:1px solid rgba(17,17,17,.06);border-radius:32px;box-shadow:0 18px 36px rgba(17,17,17,.08);display:flex;flex-direction:column;gap:18px}
-          .footer-top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+          .footer-card{max-width:var(--maxw);margin:0 auto;padding:24px 26px;background:#EEEDE5;border:1px solid rgba(17,17,17,.06);border-radius:32px;box-shadow:0 18px 36px rgba(17,17,17,.08);display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:nowrap}
+          .footer-top{display:flex;align-items:center;gap:24px;flex-wrap:nowrap}
           .footer-copy{font-weight:600;color:var(--text)}
           .footer-links{display:flex;gap:18px;font-weight:600;color:var(--muted)}
           .footer-links a{text-decoration:none;color:inherit;transition:color .2s ease}
           .footer-links a:hover{color:var(--text)}
-          .footer-dev{display:flex;align-items:center;gap:12px;padding:16px 18px;background:#FEF7D7;border-radius:24px;border:1px solid rgba(240,198,98,.38);align-self:flex-start}
-          .footer-dev span{font-size:.82rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-          .footer-dev img{width:120px;height:auto;filter:brightness(0) saturate(100%)}
+          .footer-dev{display:flex;align-items:center;gap:12px;padding:16px 18px;background:#FEF7D7;border-radius:24px;border:1px solid rgba(240,198,98,.38);align-self:flex-start;margin-left:auto}
+          .footer-dev img{width:120px;height:auto;border-radius:12px}
           @media (max-width:640px){
-            .footer-card{padding:20px 22px}
-            .footer-links{width:100%;justify-content:flex-start;flex-wrap:wrap}
-            .footer-dev{width:100%;justify-content:space-between}
+            .footer-card{padding:20px 22px;flex-direction:column;align-items:center;text-align:center;gap:18px}
+            .footer-top{flex-direction:column;gap:12px;justify-content:center;text-align:center}
+            .footer-links{width:100%;justify-content:center;flex-wrap:wrap}
+            .footer-dev{width:100%;justify-content:center;margin-left:0}
             .footer-dev img{width:100px}
           }
         </style>
@@ -512,7 +530,6 @@ customElements.define(
             </nav>
           </div>
           <div class="footer-dev">
-            <span>Developer</span>
             <img src="assets/img/developer.svg" alt="Developer" loading="lazy">
           </div>
         </div>
