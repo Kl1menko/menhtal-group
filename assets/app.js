@@ -86,7 +86,6 @@ customElements.define('section-block', class extends HTMLElement{
         .slot{display:grid;gap:16px}
         .section-about{position:relative;padding-top:40px;padding-bottom:36px;border-radius:20px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);box-shadow:0 12px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06)}
         .section-about .title{display:flex;align-items:center;gap:10px;margin-top:0;margin-bottom:6px}
-        .section-about .title::before{content:'';width:28px;height:28px;border-radius:9px;background:conic-gradient(from 0deg,var(--brand),var(--brand-2));box-shadow:0 6px 16px rgba(43,217,159,.35);-webkit-mask:radial-gradient(circle at 30% 30%, white 60%, transparent 61%);mask:radial-gradient(circle at 30% 30%, white 60%, transparent 61%)}
         .section-about .subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:18px}
         .section-about ::slotted(bullets-block){display:block}
         .section-about ::slotted(p:last-of-type){margin-top:18px;color:var(--text)}
