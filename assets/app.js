@@ -71,28 +71,35 @@ customElements.define(
 );
 
 // 3) <section-block>
-customElements.define(
-  "section-block",
-  class extends HTMLElement {
-    connectedCallback() {
-      const title = this.getAttribute("title") || "";
-      const subtitle = this.getAttribute("subtitle") || "";
-      this.attachShadow({ mode: "open" }).append(
-        tpl(`<style>
+customElements.define('section-block', class extends HTMLElement{
+  connectedCallback(){
+    if (this.shadowRoot) return;
+    const title = this.getAttribute('title')||'';
+    const subtitle = this.getAttribute('subtitle')||'';
+    const isAbout = this.id === 'about';
+    const root = this.attachShadow({mode:'open'});
+    root.append(tpl(`
+      <style>
         .wrap{max-width:var(--maxw);margin:auto;padding:52px 24px}
         .title{font-weight:900;font-size:clamp(22px,3.2vw,36px);margin:0 0 8px}
         .subtitle{color:var(--muted);margin:0 0 18px}
         .slot{display:grid;gap:16px}
+        .section-about{position:relative;padding-top:40px;padding-bottom:36px;border-radius:20px;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.10);box-shadow:0 12px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.06)}
+        .section-about .title{display:flex;align-items:center;gap:10px;margin-top:0;margin-bottom:6px}
+        .section-about .title::before{content:'';width:28px;height:28px;border-radius:9px;background:conic-gradient(from 0deg,var(--brand),var(--brand-2));box-shadow:0 6px 16px rgba(43,217,159,.35);-webkit-mask:radial-gradient(circle at 30% 30%, white 60%, transparent 61%);mask:radial-gradient(circle at 30% 30%, white 60%, transparent 61%)}
+        .section-about .subtitle{font-size:1.05rem;color:var(--muted);margin-bottom:18px}
+        .section-about ::slotted(bullets-block){display:block}
+        .section-about ::slotted(p:last-of-type){margin-top:18px;color:var(--text)}
+        .section-about ::slotted(p:last-of-type) b{background:linear-gradient(135deg,var(--brand-2),var(--brand));-webkit-background-clip:text;background-clip:text;color:transparent}
       </style>
-      <section class="wrap">
-        ${title ? `<h2 class="title">${title}</h2>` : ""}
-        ${subtitle ? `<p class="subtitle">${subtitle}</p>` : ""}
+      <section class="wrap ${isAbout? 'section-about' : ''}">
+        ${title?`<h2 class="title">${title}</h2>`:''}
+        ${subtitle?`<p class="subtitle">${subtitle}</p>`:''}
         <div class="slot"><slot></slot></div>
-      </section>`).content
-      );
-    }
+      </section>
+    `).content);
   }
-);
+});
 
 // 4) <story-block>
 customElements.define(
@@ -135,22 +142,20 @@ customElements.define(
 );
 
 // 5) <bullets-block bullets='["a","b"]'>
-customElements.define(
-  "bullets-block",
-  class extends HTMLElement {
-    connectedCallback() {
-      let items = [];
-      try {
-        items = JSON.parse(this.getAttribute("bullets") || "[]");
-      } catch {
-        items = [];
-      }
-      this.innerHTML = `<ul style="margin:0;padding-left:1.2rem;display:grid;gap:8px">${items
-        .map((it) => `<li>${it}</li>`)
-        .join("")}</ul>`;
-    }
+customElements.define('bullets-block', class extends HTMLElement{
+  connectedCallback(){
+    let items=[]; try{items=JSON.parse(this.getAttribute('bullets')||'[]')}catch{items=[]}
+    const list = items.map(it=>`<li>${it}</li>`).join('');
+    this.innerHTML = `
+      <style>
+        .list{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+        .list-check li{position:relative;padding-left:34px}
+        .list-check li::before{content:'';position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:7px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 12px rgba(43,217,159,.32);-webkit-mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23fff" d="M7.6 13.2l-3-3 1.4-1.4 1.6 1.6 5.4-5.4 1.4 1.4z"/></svg>') center/70% no-repeat;mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="%23fff" d="M7.6 13.2l-3-3 1.4-1.4 1.6 1.6 5.4-5.4 1.4 1.4z"/></svg>') center/70% no-repeat}
+      </style>
+      <ul class="list list-check">${list}</ul>
+    `;
   }
-);
+});
 
 // 6) <layers-accordion>
 const LAYERS = [
@@ -237,9 +242,24 @@ customElements.define(
   "outcomes-list",
   class extends HTMLElement {
     connectedCallback() {
-      this.innerHTML = `<ul style="margin:0;padding-left:1.2rem;display:grid;gap:8px">${OUTCOMES.map(
-        (o) => `<li>${o}</li>`
-      ).join("")}</ul>`;
+      const items = OUTCOMES.map((o) => `
+        <li class="item">
+          <span class="icon">✔</span>
+          <span class="text">${o}</span>
+        </li>`
+      ).join("");
+      this.attachShadow({ mode: "open" }).append(
+        tpl(`<style>
+        ul{margin:0;padding:0;list-style:none;display:grid;gap:14px}
+        .item{display:flex;align-items:flex-start;gap:12px;padding:16px 18px;background:#EEEDE5;border-radius:24px;border:1px solid rgba(17,17,17,.06);box-shadow:0 12px 28px rgba(17,17,17,.06)}
+        .item:nth-of-type(2n){background:#FEF7D7;border-color:rgba(240,198,98,.32)}
+        .icon{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#05261c;font-weight:800;font-size:16px;flex-shrink:0}
+        .text{color:var(--text);line-height:1.55;font-size:1rem}
+        .text b{color:var(--text)}
+        @media (max-width:620px){.item{padding:14px 14px}}
+      </style>
+      <ul>${items}</ul>`).content
+      );
     }
   }
 );
