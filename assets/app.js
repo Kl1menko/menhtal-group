@@ -1,4 +1,5 @@
 // Utilities
+const TELEGRAM_URL = 'https://t.me/roman_khristin';
 const tpl = (html) =>
   Object.assign(document.createElement("template"), { innerHTML: html });
 const $ = (root, sel) => root.querySelector(sel);
@@ -10,7 +11,7 @@ customElements.define(
     connectedCallback() {
       const brand = this.getAttribute("brand") || "Бренд";
       const cta = this.getAttribute("cta") || "Записатися";
-      const href = this.getAttribute("cta-href") || "#apply";
+      const href = this.getAttribute("cta-href") || TELEGRAM_URL;
       this.attachShadow({ mode: "open" }).append(
         tpl(`<style>
         :host{display:block;position:relative;padding-bottom:120px}
@@ -62,7 +63,7 @@ customElements.define(
         <p class="lead" style="max-width:640px">${subtitle}</p>
         <p class="lead" style="opacity:.9;max-width:640px">${sub2}</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:24px;justify-content:center">
-          <a class="btn" href="${ph}">🌱 ${pt}</a>
+          <a class="btn" href="${ph}" target="_blank" rel="noopener">🌱 ${pt}</a>
           <a class="btn outline" href="${sh}">${st}</a>
         </div>
       </section>`;
@@ -101,44 +102,64 @@ customElements.define('section-block', class extends HTMLElement{
 });
 
 // 4) <story-block>
-customElements.define(
-  "story-block",
-  class extends HTMLElement {
-    connectedCallback() {
-      if (this.shadowRoot) return;
-      const paragraphs = Array.from(this.querySelectorAll("p"));
-      const items = paragraphs.map((p, idx) => ({
-        html: p.innerHTML.trim(),
-        accent: p.hasAttribute("data-accent") || idx % 2 === 1,
-        index: idx + 1,
-      }));
-      this.innerHTML = "";
-      const cards = items
-        .map(
-          (item) => `
-        <article class="card${item.accent ? " accent" : ""}">
-          <div class="metric">${String(item.index).padStart(2, '0')}</div>
-          <div class="copy">${item.html}</div>
-        </article>`
-        )
-        .join("");
-      this.attachShadow({ mode: "open" }).append(
-        tpl(`<style>
-        .grid{display:grid;gap:18px;counter-reset:story}
-        @media (min-width:720px){.grid{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}}
-        .card{background:#EEEDE5;border-radius:32px;padding:28px 26px;box-shadow:0 20px 40px rgba(17,17,17,.08);display:flex;flex-direction:column;gap:16px;min-height:170px;border:1px solid rgba(17,17,17,.06);transition:transform .2s ease, box-shadow .2s ease}
+const STORY_ICON_MAP = [
+  { keywords: ['втратити смак', 'смак'], label: 'Втрачений смак до життя', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>` },
+  { keywords: ['масштабував', 'перемог', 'статус'], label: 'Статус і перемоги', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M4 5h16"/><path d="M4 9h16"/><path d="M9 13v8l3-2 3 2v-8"/><path d="M7 5a5 5 0 0 1-2-4"/><path d="M17 5a5 5 0 0 0 2-4"/></svg>` },
+  { keywords: ['спустош'], label: 'Внутрішня порожнеча', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/><line x1="6" y1="11" x2="6" y2="13"/></svg>` },
+  { keywords: ['банкрут', 'борг', 'розбит'], label: 'Банкрутства і розриви', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="10"/><path d="M16 8h-5a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>` },
+  { keywords: ['чесно подивився', 'подивився в дзеркало'], label: 'Чесний погляд у дзеркало', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>` },
+  { keywords: ['справжнього себе'], label: 'Справжній я', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M12 3v2"/><path d="M5.22 5.22 6.64 6.64"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M17.36 6.64 18.78 5.22"/><path d="M12 19v2"/><path d="M4.93 19.07 7.76 16.24"/><path d="m19.07 19.07-2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>` },
+  { keywords: ['гра в повноті', 'з цього почалася'], label: 'Початок гри', svg: `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M7 20h10"/><path d="M10 20c5.5-2.5 6.5-8.5 6.5-14.5 0-.5 0-1 0-1.5C12.5 7 10 11.5 10 16"/><path d="M9.5 9C8 7 7 5 7 3"/></svg>` }
+];
+
+customElements.define('story-block', class extends HTMLElement{
+  connectedCallback(){
+    if (this.shadowRoot) return;
+    const raw = Array.from(this.querySelectorAll('p'));
+    const items = [];
+    const splitMarker = 'З цього почалася';
+    raw.forEach((p, baseIdx) => {
+      const html = p.innerHTML.trim();
+      if (!html) return;
+      const idx = html.indexOf(splitMarker);
+      if (idx > -1){
+        const before = html.slice(0, idx).trim();
+        const after = html.slice(idx).trim();
+        if (before) items.push(before);
+        if (after) items.push(after);
+      } else {
+        items.push(html);
+      }
+    });
+    this.innerHTML = '';
+    const cards = items.map((html, idx) => {
+      const lower = html.toLowerCase();
+      const icon = STORY_ICON_MAP.find(({ keywords }) => keywords.some((k) => lower.includes(k))) || STORY_ICON_MAP[STORY_ICON_MAP.length - 1];
+      const accent = idx % 2 === 1;
+      return `
+        <article class="card${accent ? ' accent' : ''}">
+          <div class="icon" aria-label="${icon.label}">${icon.svg}</div>
+          <div class="copy">${html}</div>
+        </article>`;
+    }).join('');
+    this.attachShadow({mode:'open'}).append(
+      tpl(`<style>
+        .grid{display:grid;gap:18px;grid-template-columns:repeat(3,minmax(0,1fr));justify-items:center}
+        @media (max-width:1100px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media (max-width:720px){.grid{grid-template-columns:1fr}}
+        .card{width:100%;max-width:280px;background:#EEEDE5;border-radius:32px;padding:28px 26px;box-shadow:0 20px 40px rgba(17,17,17,.08);display:flex;flex-direction:column;gap:16px;min-height:200px;border:1px solid rgba(17,17,17,.06);transition:transform .2s ease, box-shadow .2s ease}
         .card.accent{background:#FEF7D7;border-color:rgba(240,198,98,.38)}
         .card:hover{transform:translateY(-2px);box-shadow:0 26px 46px rgba(17,17,17,.12)}
-        .metric{font-size:clamp(28px,3vw,40px);font-weight:800;color:var(--text)}
+        .icon{width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:#fff;box-shadow:0 10px 20px rgba(17,17,17,.12)}
+        .icon svg{width:42px;height:42px}
         .copy{color:var(--muted);line-height:1.6;font-size:1rem}
         .copy b{color:var(--text)}
-        @media (max-width:620px){.card{padding:20px 18px;gap:12px;min-height:140px}}
+        @media (max-width:620px){.card{padding:20px 18px;gap:12px;min-height:160px}.icon{width:52px;height:52px}.icon svg{width:36px;height:36px}}
       </style>
       <div class="grid">${cards}</div>`).content
-      );
-    }
+    );
   }
-);
+});
 
 // 5) <bullets-block bullets='["a","b"]'>
 customElements.define('bullets-block', class extends HTMLElement{
@@ -275,7 +296,7 @@ customElements.define(
             <div class="eyebrow">Вартість</div>
             <h3 style="margin:.2rem 0 0;font-size:34px">1500$ <span class="muted" style="font-size:16px">за 5 місяців</span></h3>
           </div>
-          <a class="btn" href="#apply">Піти в гру</a>
+          <a class="btn" href="${TELEGRAM_URL}" target="_blank" rel="noopener">Піти в гру</a>
         </div>
         <div class="grid cols-2" style="margin-top:14px">
           <div>
@@ -371,7 +392,7 @@ customElements.define(
         clearInterval(this._timerId);
       }
       const text = this.getAttribute("cta-text") || "Подати заявку";
-      const href = this.getAttribute("cta-href") || "#apply";
+      const href = this.getAttribute("cta-href") || TELEGRAM_URL;
       const note = this.getAttribute("note") || "";
       this.innerHTML = `
       <section class="container" style="padding:40px 24px 64px;position:relative">
@@ -399,7 +420,7 @@ customElements.define(
               <div class="eyebrow">Фінальний крок</div>
               <div class="lead" style="margin:.2rem 0 0">${note}</div>
             </div>
-            <a class="btn" href="${href}">🌱 ${text}</a>
+            <a class="btn" href="${href}" target="_blank" rel="noopener">🌱 ${text}</a>
           </div>
           <div class="cta-timer" role="group" aria-label="Залишилось до старту">
             <div class="cta-timer__label">🔥 Залишилось:</div>
