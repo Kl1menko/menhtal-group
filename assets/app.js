@@ -4,18 +4,6 @@ const tpl = (html) =>
   Object.assign(document.createElement("template"), { innerHTML: html });
 const $ = (root, sel) => root.querySelector(sel);
 
-// Skeleton loader
-const skeleton = document.getElementById('skeleton-overlay');
-if (skeleton) {
-  const hideSkeleton = () => {
-    skeleton.classList.add('is-hidden');
-    skeleton.addEventListener('transitionend', () => skeleton.remove(), { once: true });
-  };
-  window.addEventListener('load', () => {
-    setTimeout(hideSkeleton, 2200);
-  });
-}
-
 // 1) <app-header>
 customElements.define(
   "app-header",
